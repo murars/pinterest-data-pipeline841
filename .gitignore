@@ -1,6 +1,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.env
+user_posting_emulation.py
 # Virtual environment
 pinterest_project_env/
