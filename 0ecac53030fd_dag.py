@@ -2,7 +2,6 @@ from airflow import DAG
 from airflow.providers.databricks.operators.databricks import DatabricksSubmitRunOperator, DatabricksRunNowOperator
 from datetime import datetime, timedelta 
 
-
 #Define params for Submit Run Operator
 notebook_task = {
     'notebook_path': '/Users/marslan72@gmail.com/clean_and_queries_batch_data.ipynb',
@@ -22,7 +21,6 @@ default_args = {
     'retry_delay': timedelta(minutes=2)
 }
 
-
 with DAG('0ecac53030fd_dag',
     # should be a datetime format
     start_date=datetime(2024, 4, 25),
@@ -39,4 +37,5 @@ with DAG('0ecac53030fd_dag',
         existing_cluster_id='1108-162752-8okw8dgg',
         notebook_task=notebook_task
     )
+    
     opr_submit_run
