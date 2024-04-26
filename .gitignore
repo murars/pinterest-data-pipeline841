@@ -3,5 +3,6 @@ __pycache__/
 *$py.class
 .env
 user_posting_emulation.py
+airflow_venv
 # Virtual environment
 pinterest_project_env/
