@@ -356,7 +356,7 @@ client.sasl.client.callback.handler.class = software.amazon.msk.auth.iam.IAMClie
 ```
 The inbound rules for the client security group also need to be modified to allow incoming HTTP requests on port 8082. On the AWS 'Security groups' page, choose the security group attached to the client, and add the following inbound rule:
 
-<img src="images/client-http-inbound-rules.png" alt="Delivering messages to the Kafka cluster" width="700px">
+<img src="images/client-http-inbound-rules.png" alt="Delivering messages to the Kafka cluster" width="800px">
 
 To start the REST API, navigate to the confluent-7.2.0/bin folder and run the following command:
 
@@ -378,11 +378,11 @@ Navigate to the AWS API Gateway service. This project uses a REST API.
 
 1. Click on 'Build' in the REST API box:
 
-<img src="images/rest-api-build.png" alt="AWS API Gateway" width="500px">
+<img src="images/rest-api-build.png" alt="AWS API Gateway" width="900px">
 
 2. Choose 'REST', 'New API', give the API a descriptive name, then click on 'Create API':
 
-<img src="images/rest-api-build-2.png" alt="AWS API Gateway" width="500px">
+<img src="images/rest-api-build-2.png" alt="AWS API Gateway" width="600px">
 
 3. From the 'Actions' menu, choose 'Create resource'. Select 'Configure as proxy resource' and 'Enable API Gateway CORS' boxes, then click on 'Create resource':
 
