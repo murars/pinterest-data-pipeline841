@@ -6,17 +6,17 @@
 - [Project Installation and Dependencies](#project-installation-and-dependencies)
 - [The Data](#the-data)
 - [Tools used](#tools-used)
-- [Architecture Overview](architecture-overview)
-Building the pipeline
-Create an Apache cluster using AWS MSK
-Create a client machine for the cluster
-Enable client machine to connect to the cluster
-Install Kafka on the client machine
-Create topics on the Kafka cluster
-Delivering messages to the Kafka cluster
-AWS API Gateway
-Sending messages to the cluster using the API gateway
-Connecting the Apache cluster to AWS S3 bucket
+- [Architecture Overview](#architecture-overview)
+- [Building the pipeline](#building-the-pipeline)
+ - [Create an Apache cluster using AWS MSK](#create-an-apache-cluster-using-aws-msk)
+ - [Create a client machine for the cluster](#create-a-client-machine-for-the-cluster)
+ - [Enable client machine to connect to the cluster](#enable-client-machine-to-connect-to-the-cluster)
+ - [Install Kafka on the client machine](#install-kafka-on-the-client-machine)
+ - [Create topics on the Kafka cluster](#create-topics-on-the-kafka-cluster)
+ - [Delivering messages to the Kafka cluster](#delivering-messages-to-the-kafka-cluster)
+ - [AWS API Gateway](#aws-api-gateway)
+ - [Sending messages to the cluster using the API gateway](#sending-messages-to-the-cluster-using-the-api-gateway)
+ - [Connecting the Apache cluster to AWS S3 bucket](#connecting-the-apache-cluster-to-aws-s3-bucket)
 Batch processing data using Apache Spark on Databricks
 Clean data using Apache Spark on Databricks
 Querying the data using Apache Spark on Databricks
