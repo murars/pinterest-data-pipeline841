@@ -146,11 +146,12 @@ The first stop in the pipeline for our data will be an Apache Kafka cluster in t
 2. From the MSK menu, click on 'Create cluster' to start the process.
 3. Here, choose from 'quick' or 'custom' create options and name the cluster:
 
-![Create an Apache cluster using AWS MSK](images/apache-msk-1.png)
+<img src="images/apache-msk-1.png" alt="Create an Apache cluster using AWS MSK" width="600px">
+
 
 4. Scroll down and choose 'Provisioned' and specify the Kafka version and broker type. The type chosen will depend on requirements and cost considerations.
-   
-![Create an Apache cluster using AWS MSK](images/apache-msk-2.png)
+  
+<img src="images/apache-msk-2.png" alt="Create an Apache cluster using AWS MSK" width="600px">
 
 5. Finally, scroll down and click 'Create cluster'. The cluster can take between 15 and 20 minutes to create. When the cluster has been created, navigate to the 'Properties' tab, locate the network settings and take a note of the security group associated with the cluster. Next, click on 'View client information' and take a note of the bootstrap servers.
 
@@ -160,16 +161,16 @@ The first stop in the pipeline for our data will be an Apache Kafka cluster in t
 
 Navigate to the EC2 dashboard and click on 'Launch Instance':
 
-![Create a client machine for the cluster](images/ec2-launch-instance.png)
+<img src="images/ec2-launch-instance.png" alt="Create a client machine for the cluster" width="600px">
 
 2. Give the instance a name, e.g. 'pinterest-kafka-client'.
 3. Keep the default Application and OS images, and instance type. Again, this choice may be determined by usage and cost considerations.
 
-![Create a client machine for the cluster](images/ec2-OS-images.png)
+<img src="images/ec2-OS-images.png" alt="Create a client machine for the cluster" width="600px">
 
 4. Create a new keypair for connecting securely to the instance via SSH. Give the keypair a descriptive name and choose 'RSA' and '.pem' for the type and file format, respectively. The .pem file will automatically download - keep this file safe for later use.
 
-![Create a client machine for the cluster](images/ec2-key-pair.png)
+<img src="images/ec2-key-pair.png" alt="Create a client machine for the cluster" width="600px">
 
 5. Keep the default settings for the other sections. Click on 'Launch Instance' in the right-hand summary menu.
 
@@ -245,7 +246,7 @@ We also need to create an IAM role for the client machine.
 
 1. Once the new instance is in the running state, connect via SSH to interact with the instance using the command line. To do this, click on the instance ID to open the summary page, then click on 'Connect':
 
-![Install Kafka on the client macine](images/connect-to-ec2.png)
+<img src="images/connect-to-ec2.png" alt="Install Kafka on the client macine" width="700px">
 
 2. Follow the instructions in the 'SSH' tab to connect to the instance.
 ```
@@ -355,7 +356,7 @@ client.sasl.client.callback.handler.class = software.amazon.msk.auth.iam.IAMClie
 ```
 The inbound rules for the client security group also need to be modified to allow incoming HTTP requests on port 8082. On the AWS 'Security groups' page, choose the security group attached to the client, and add the following inbound rule:
 
-![Delivering messages to the Kafka cluster](images/client-http-inbound-rules.png)
+<img src="images/client-http-inbound-rules.png" alt="Delivering messages to the Kafka cluster" width="700px">
 
 To start the REST API, navigate to the confluent-7.2.0/bin folder and run the following command:
 
@@ -373,6 +374,17 @@ For this project, to more easily connect to the API programmatically using diffe
 
 ### AWS API Gateway
 
+Navigate to the AWS API Gateway service. This project uses a REST API.
+
+1. Click on 'Build' in the REST API box:
+
+<img src="images/rest-api-build.png" alt="AWS API Gateway" width="500px">
+
+2. Choose 'REST', 'New API', give the API a descriptive name, then click on 'Create API':
+
+<img src="images/rest-api-build-2.png" alt="AWS API Gateway" width="500px">
+
+3. From the 'Actions' menu, choose 'Create resource'. Select 'Configure as proxy resource' and 'Enable API Gateway CORS' boxes, then click on 'Create resource':
 
 
 ### Sending messages to the cluster using the API gateway
