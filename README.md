@@ -154,7 +154,7 @@ The first stop in the pipeline for our data will be an Apache Kafka cluster in t
 
 5. Finally, scroll down and click 'Create cluster'. The cluster can take between 15 and 20 minutes to create. When the cluster has been created, navigate to the 'Properties' tab, locate the network settings and take a note of the security group associated with the cluster. Next, click on 'View client information' and take a note of the bootstrap servers.
 
-###Create a client machine for the cluster
+### Create a client machine for the cluster
 
 1. Once the cluster is up and running, a client is needed to communicate with it. In this project, an EC2 instance is used to act as the client.
 
@@ -173,7 +173,7 @@ Navigate to the EC2 dashboard and click on 'Launch Instance':
 
 5. Keep the default settings for the other sections. Click on 'Launch Instance' in the right-hand summary menu.
 
-###Enable client machine to connect to the cluster
+### Enable client machine to connect to the cluster
 
 In order for the client machine to connect to the cluster, we need to edit the inbound rules for the security group associated with the cluster.
 
@@ -241,7 +241,144 @@ We also need to create an IAM role for the client machine.
 9. Under 'Actions' and 'Security', click on 'Modify IAM role'.
 10. Select the role just created and click on 'Update IAM role'.
 
-###Install Kafka on the client machine
+### Install Kafka on the client machine
+
+1. Once the new instance is in the running state, connect via SSH to interact with the instance using the command line. To do this, click on the instance ID to open the summary page, then click on 'Connect':
 
 ![Install Kafka on the client macine](images/connect-to-ec2.png)
+
+2. Follow the instructions in the 'SSH' tab to connect to the instance.
+```
+# make sure key is not publicly viewable
+chmod 400 pinterest-kafka-client-keypair.pem
+# connect
+ssh -i "pinterest-kafka-client-keypair.pem" ec2-user@<instance-public-DNS>
+```
+3. Now on the instance command line:
+```
+# install Java - required for Kafka to run
+sudo yum install java-1.8.0
+# download Kafka - must be same version as MSK cluster created earlier
+wget https://archive.apache.org/dist/kafka/2.8.1/kafka_2.12-2.8.1.tgz
+# unpack .tgz
+tar -xzf kafka_2.12-2.8.1.tgz
+```
+
+4. Install the [MSK IAM package](https://github.com/aws/aws-msk-iam-auth/releases/download/v1.1.5/aws-msk-iam-auth-1.1.5-all.jar) that will enable the MSK cluster to authenticate the client:
+
+```
+# navigate to the correct directory
+cd kafka_2.12-2.8.1/libs/
+# download the package
+wget https://github.com/aws/aws-msk-iam-auth/releases/download/v1.1.5/aws-msk-iam-auth-1.1.5-all.jar
+```
+
+5. Configure the client to be able to use the IAM package:
+```
+# open bash config file
+nano ~/.bashrc
+```
+
+Add the following line to the config file, then save and exit:
+
+  export CLASSPATH=/home/ec2-user/kafka_2.12-2.8.1/libs/aws-msk-iam-auth-1.1.5-all.jar
+  
+Continue with configuration:
+```
+# activate changes to .bashrc
+source ~/.bashrc
+# navigate to Kafka bin folder
+cd ../bin
+# create client.properties file
+nano client.properties
+```
+Add the following code to the client.properties file, then save and exit:
+```
+# Sets up TLS for encryption and SASL for authN.
+security.protocol = SASL_SSL
+
+# Identifies the SASL mechanism to use.
+sasl.mechanism = AWS_MSK_IAM
+
+# Binds SASL client implementation.
+sasl.jaas.config = software.amazon.msk.auth.iam.IAMLoginModule required;
+
+# Encapsulates constructing a SigV4 signature based on extracted credentials.
+# The SASL client bound by "sasl.jaas.config" invokes this class.
+sasl.client.callback.handler.class = software.amazon.msk.auth.iam.IAMClientCallbackHandler
+```
+
+### Create topics on the Kafka cluster
+
+It is now possible to create topics on the Kafka cluster using the client machine command line. The command for creating topics is as follows. Use the boostrap server string noted earlier after cluster creation.
+    
+```
+<path-to-your-kafka-installation>/bin/kafka-topics.sh --create --bootstrap-server <BootstrapServerString> --command-config client.properties --topic <topic name>
+```
+For this project, I created three topics. One each for the pinterest_data, geolocation_data, and user_data outlined above.
+
+### Delivering messages to the Kafka cluster
+
+Now that our cluster is up and running, and the client is configured to access the cluster and create topics, it's possible to use the client to create producers for streaming messages to the cluster, and consumers for accessing those messages.
+
+However, for this project I used the Confluent package to set up a REST API on the client that listens for requests and interacts with the Kafka cluster accordingly.
+
+To do this, first download the Confluent package to the client from the client's command line:
+```
+# download package
+sudo wget https://packages.confluent.io/archive/7.2/confluent-7.2.0.tar.gz
+# unpack .tar
+tar -xvzf confluent-7.2.0.tar.gz
+```
+Next, modify the kafka-rest.properties file:
+
+```
+# navigate to the correct directory
+cd confluent-7.2.0/etc/kafka-rest/
+nano kafka-rest.properties
+```
+Change the bootstrap.servers and the zookeeper.connect variables to those found in the MSK cluster information. Add the following lines to allow authentication:
+
+```
+# Sets up TLS for encryption and SASL for authN.
+client.security.protocol = SASL_SSL
+
+# Identifies the SASL mechanism to use.
+client.sasl.mechanism = AWS_MSK_IAM
+
+# Binds SASL client implementation.
+client.sasl.jaas.config = software.amazon.msk.auth.iam.IAMLoginModule required;
+
+# Encapsulates constructing a SigV4 signature based on extracted credentials.
+# The SASL client bound by "sasl.jaas.config" invokes this class.
+client.sasl.client.callback.handler.class = software.amazon.msk.auth.iam.IAMClientCallbackHandler
+```
+The inbound rules for the client security group also need to be modified to allow incoming HTTP requests on port 8082. On the AWS 'Security groups' page, choose the security group attached to the client, and add the following inbound rule:
+
+![Delivering messages to the Kafka cluster](images/client-http-inbound-rules.png)
+
+To start the REST API, navigate to the confluent-7.2.0/bin folder and run the following command:
+
+```
+./kafka-rest-start /home/ec2-user/confluent-7.2.0/etc/kafka-rest/kafka-rest.properties
+```
+
+The API's ability to receive requests can be tested by opening a web browser and going to "http://your-client-public-dns:8082/topics". The response should be displayed in the browser window and look something like:
+
+```
+["data.pin","data.user","__amazon_msk_canary","data.geo"]
+```
+
+For this project, to more easily connect to the API programmatically using different request methods I set up an API gateway on AWS
+
+### AWS API Gateway
+
+
+
+### Sending messages to the cluster using the API gateway
+
+
+
+### Connecting the Apache cluster to AWS S3 bucket
+
 
