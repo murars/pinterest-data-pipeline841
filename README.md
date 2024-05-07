@@ -592,7 +592,7 @@ The first step in processing streaming data was to create three streams on AWS K
 
   2. Give the stream a name, and select 'Provisioned' capacity mode.
 
-<img src="images/create-stream.png" alt="Create data streams on Kinesis" width="600px">
+<img src="images/create-stream.png" alt="Create data streams on Kinesis" width="900px">
 
   3. Click on 'Create data stream' to complete the process.
 
@@ -608,7 +608,7 @@ The settings used for the DELETE method were:
  - 'Action': 'DeleteStream'
  - 'Execution role': 'arn of IAM role created'
 
-<img src="images/delete-method-settings-1.png" alt="Create API proxy for uploading data to streams" width="600px">
+<img src="images/delete-method-settings-1.png" alt="Create API proxy for uploading data to streams" width="900px">
 
 In 'Integration Request' under 'HTTP Headers', add a new header:
 
@@ -624,7 +624,7 @@ Use the following code in the template:
     "StreamName": "$input.params('stream-name')"
 }
 ```
-<img src="images/delete-method-settings-2.png" alt="Create API proxy for uploading data to streams" width="600px">
+<img src="images/delete-method-settings-2.png" alt="Create API proxy for uploading data to streams" width="900px">
 
 For the other methods, the same settings were used except for:
 
