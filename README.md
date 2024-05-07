@@ -57,7 +57,7 @@ For the Virtual environment; CONDA environment is used
 
 ## The Data
 
-To emulate the kind of data that Pinterest's engineers are likely to work with, this project contains a script, [user_posting_emulation.py] that when run from the terminal mimics the stream of random data points received by the Pinterest API when POST requests are made by users uploading data to Pinterest.
+To emulate the kind of data that Pinterest's engineers are likely to work with, this project contains a script, [user_posting_emulation_test.py](user_posting_emulation_test.py) that when run from the terminal mimics the stream of random data points received by the Pinterest API when POST requests are made by users uploading data to Pinterest.
 
 Running the script instantiates a database connector class, which is used to connect to an AWS RDS database containing the following tables:
 
@@ -579,5 +579,149 @@ The file [clean_and_queries_batch_data.ipynb](databricks_notebooks/clean_and_que
 
 ### Orchestrating automated workflow of notebook on Databricks
 
-MWAA was used to automate the process of running the batch processing on Databricks. The file 0ecac53030fd_dag.py is the Python code for a directed acyclic graph (DAG) that orchestrates the running of the batch processing notebook described above. The file was uploaded to the MWAA environment, where Airflow is utilised to connect to and run the Databricks notebook at scheduled intervals, in this case @daily.
+MWAA was used to automate the process of running the batch processing on Databricks. The file [0ecac53030fd_dag.py](0ecac53030f_dag.py) is the Python code for a directed acyclic graph (DAG) that orchestrates the running of the batch processing notebook described above. The file was uploaded to the MWAA environment, where Airflow is utilised to connect to and run the Databricks notebook at scheduled intervals, in this case @daily.
+
+## Processing streaming data
+
+### Create data streams on Kinesis
+The first step in processing streaming data was to create three streams on AWS Kinesis, one for each of the data sources.
+
+  1. From the Kinesis dashboard, select 'Create data stream'.
+
+<img src="images/kinesis-dashboard.png" alt="Create data streams on Kinesis" width="600px">
+
+  2. Give the stream a name, and select 'Provisioned' capacity mode.
+
+<img src="images/create-stream.png" alt="Create data streams on Kinesis" width="600px">
+
+  3. Click on 'Create data stream' to complete the process.
+
+### Create API proxy for uploading data to streams
+It's possible to interact with the Kinesis streams using HTTP requests. In order to do this with the streams just added to Kinesis, I created new API resources on AWS API Gateway.
+
+The settings used for the DELETE method were:
+
+ - 'Integration Type': 'AWS Service'
+ - 'AWS Region': 'us-east-1'
+ - 'AWS Service': 'Kinesis'
+ - 'HTTP method': 'POST'
+ - 'Action': 'DeleteStream'
+ - 'Execution role': 'arn of IAM role created'
+
+<img src="images/delete-method-settings-1" alt="Create API proxy for uploading data to streams" width="600px">
+
+In 'Integration Request' under 'HTTP Headers', add a new header:
+
+ - 'Name': 'Content-Type'
+ - 'Mapped from': 'application/x-amz-json-1.1'
+ - 
+Under 'Mapping Templates', add new mapping template:
+ - 'Content Type': 'application/json'
+
+Use the following code in the template:
+```
+{
+    "StreamName": "$input.params('stream-name')"
+}
+```
+<img src="images/delete-method-settings-2" alt="Create API proxy for uploading data to streams" width="600px">
+
+For the other methods, the same settings were used except for:
+
+ - GET
+  - 'Action': 'DescribeStream'
+  - 'Mapping Template':
+``` 
+{
+    "StreamName": "$input.params('stream-name')"
+}
+```
+
+ - POST
+  - 'Action': 'CreateStream'
+  - 'Mapping Template':
+```
+{
+    "ShardCount": #if($input.path('$.ShardCount') == '') 5 #else $input.path('$.ShardCount') #end,
+    "StreamName": "$input.params('stream-name')"
+}
+```
+
+/record
+
+ - PUT
+  - 'Action': 'PutRecord'
+  - 'Mapping Template':
+```
+{
+    "StreamName": "$input.params('stream-name')",
+    "Data": "$util.base64Encode($input.json('$.Data'))",
+    "PartitionKey": "$input.path('$.PartitionKey')"
+}
+```
+
+/records
+
+ - PUT
+  - 'Action': 'PutRecords'
+  - 'Mapping Template':
+```
+{
+    "StreamName": "$input.params('stream-name')",
+    "Records": [
+       #foreach($elem in $input.path('$.records'))
+          {
+            "Data": "$util.base64Encode($elem.data)",
+            "PartitionKey": "$elem.partition-key"
+          }#if($foreach.hasNext),#end
+        #end
+    ]
+}
+```
+
+After creating the new resources and methods, the API must be redeployed.
+
+### Sending data to the Kinesis streams
+
+Running the script [user_posting_emulation_streaming.py](user_posting_scripts/user_posting_emulation_streaming.py) starts an infinite loop that, like in the examples above, retrieves records from the RDS database and sends them via the new API to Kinesis.
+
+### Processing the streaming data in Databricks
+
+The Jupyter notebook [read_and_transform_Kinesis_streams.ipynb](read_and_transform_Kinesis_streams.ipynb) contains all the code necessary for retrieving the streams from Kinesis, transforming (cleaning) the data, and then loading the data into Delta tables on the Databricks cluster. The steps taken in the code are:
+
+  1. Import necessary functions and types
+  2. List tables in Databricks filestore in order to obtain AWS credentials file name
+  3. Read the credentials .csv into a Spark dataframe
+  4. Generate credential variables from Spark dataframe
+  5. Define functions for:
+    - getting streams from Kinesis using spark.readStream - returns dataframe with stream info and data in binary format
+    - deserialising the stream data - converts the binary data format to a dataframe using schema defined above
+    - writing streaming data to Delta tables using Spark writeStream function
+  6. Define schema for deserialised data
+  7. Invoke get_stream function for all three streams
+  8. Invoke deserialise_stream function for all three streams
+  9. Clean all three streams
+  10. Display the streams
+  11. Write the streams to Delta tables
+
+### To access and verify the data in Databricks, follow these steps:
+
+  - Navigate to Databricks off the main menu on the left.
+  - Click on "Catalog."
+ <img src="images/checking-data-delta-table-1.png" alt="To access and verify the data in Databricks" width="600px">
+ 
+  - Locate your streaming name among the available tables:
+    - 0ecac53030rd_pin_table
+    - 0ecac53030rd_geo_table
+    - 0ecac53030rd_user_table
+  - Click on each table, and inside the table, click on "Sample Data."
+  - Verify if the data displayed is cleaned data, meaning it has been processed and is ready for analysis.
+
+<img src="images/checking-data-delta-table-2.png" alt="To access and verify the data in Databricks" width="600px">
+
+## Next Steps:
+
+Consider Further Data Analysis:
+   - Querying the streaming data for deeper insights and analysis. 
+   - Visualize the data using a visualization tool such as Tableau or Power BI to create interactive dashboards and reports.
 
