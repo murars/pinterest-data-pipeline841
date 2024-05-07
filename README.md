@@ -527,7 +527,7 @@ We're now ready to create the connector. The first step is to create a new plugi
 2. In the AWS MSK dashboard, select 'Custom plugins' from the left-hand menu, then click on 'Create custom plugin'.
 3. In the next window, navigate to the S3 bucket where the .zip is stored, and select the .zip file:
 
-<img src="images/custom-plugin.png" alt="Connecting the Apache cluster to AWS S3 bucket" width="400px">
+<img src="images/custom-plugin.png" alt="Connecting the Apache cluster to AWS S3 bucket" width="600px">
 
 4. Click on 'Create custom plugin'. The process will take a few minutes.
 
@@ -563,7 +563,7 @@ Once the connector creation process is complete, you should be able to see any m
 
 ## Batch processing data using Apache Spark on Databricks
 
-In order to batch process the data on Databricks, it's necessary to mount the S3 bucket on the platform. The file [mounting_the_s3_bucket_on_the_databricks.ipynb](databricks_notebooks/mounting_the_s3_bucket_on_the_databricks.ipynb) is a notebook that was run on the Databricks platform. The steps carried out in the notebook are:
+In order to batch process the data on Databricks, it's necessary to mount the S3 bucket on the platform. The file [mounting_the_s3_bucket_on_the_databricks.ipynb](databricks_notebooks/mounting_the_S3_bucket_on_the_databricks.ipynb) is a notebook that was run on the Databricks platform. The steps carried out in the notebook are:
 
 1. Import necessary libraries
 2. List tables in Databricks filestore in order to obtain AWS credentials file name
