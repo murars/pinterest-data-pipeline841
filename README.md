@@ -721,7 +721,7 @@ The Jupyter notebook [read_and_transform_Kinesis_streams.ipynb](databricks_noteb
 
 ## Next Steps:
 
-Consider Further Data Analysis:
+Considering Further Data Analysis:
    - Querying the streaming data for deeper insights and analysis. 
    - Visualize the data using a visualization tool such as Tableau or Power BI to create interactive dashboards and reports.
 
