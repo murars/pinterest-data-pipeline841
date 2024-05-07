@@ -2,7 +2,7 @@ import random
 
 from database_utils import *
 
-@just_keep_running
+@run_infinitely
 def run_infinite_post_data_loop():
     '''
     Utilises decorator to run infinitely at random intervals, calls class method
