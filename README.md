@@ -18,8 +18,7 @@
   - [Sending messages to the cluster using the API gateway](#sending-messages-to-the-cluster-using-the-api-gateway)
   - [Connecting the Apache cluster to AWS S3 bucket](#connecting-the-apache-cluster-to-aws-s3-bucket)
 - [Batch processing data using Apache Spark on Databricks](#batch-processing-data-using-apache-spark-on-databricks)
-  - [Clean data using Apache Spark on Databricks](#clean-data-using-apache-spark-on-databricks)
-  - [Querying the data using Apache Spark on Databricks](#querying-the-data-using-apache-spark-on-databricks)
+  - [Clean and query the data using Apache Spark on Databricks](#clean-and-query-the-data-using-apache-spark-on-databricks)
   - [Orchestrating automated workflow of notebook on Databricks](#orchestrating-automated-workflow-of-notebook-on-databricks)
 - [Processing streaming data](#processing-streaming-data)
   - [Create data streams on Kinesis](#create-data-streams-on-kinesis)
@@ -411,4 +410,174 @@ In order to access the messages in each topic in the cluster, I have used Kafka 
 
 ### Connecting the Apache cluster to AWS S3 bucket
 
+To start with, create an S3 bucket that will connect to the cluster.
+
+1. From the AWS S3 dashboard, select 'Create bucket'
+2. Give the bucket a descriptive name (must be unique) and make sure the bucket is in the same AWS region as the rest of the project resources. Keep other settings as default.
+
+Next, create an IAM role for the MSK connector using the following policy. Again, this policy may not be restrictive enough for production purposes. I am using this for development only.
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "s3:*",
+                "kafka-cluster:DescribeCluster",
+                "kafka-cluster:Connect"
+            ],
+            "Resource": [
+                "arn:aws:s3:::<BUCKET-NAME>",
+                "arn:aws:s3:::<BUCKET-NAME>/*",
+                "arn:aws:kafka:<REGION>:<AWS-UUID>:cluster/<CLUSTER-NAME>/<CLUSTER-UUID>"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "kafka-cluster:ReadData",
+                "kafka-cluster:DescribeTopic"
+            ],
+            "Resource": "arn:aws:kafka:<REGION>:<AWS-UUID>:topic/<CLUSTER-NAME>/<CLUSTER-UUID>/*"
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": [
+                "kafka-cluster:DescribeTopic",
+                "kafka-cluster:WriteData"
+            ],
+            "Resource": "arn:aws:kafka:<REGION>:<AWS-UUID>:topic/<CLUSTER-NAME>/<CLUSTER-UUID>/*"
+        },
+        {
+            "Sid": "VisualEditor3",
+            "Effect": "Allow",
+            "Action": [
+                "kafka-cluster:CreateTopic",
+                "kafka-cluster:ReadData",
+                "kafka-cluster:DescribeTopic",
+                "kafka-cluster:WriteData"
+            ],
+            "Resource": "arn:aws:kafka:<REGION>:<AWS-UUID>:topic/<CLUSTER-NAME>/<CLUSTER-UUID>/__amazon_msk_connect_*"
+        },
+        {
+            "Sid": "VisualEditor4",
+            "Effect": "Allow",
+            "Action": [
+                "kafka-cluster:AlterGroup",
+                "kafka-cluster:DescribeGroup"
+            ],
+            "Resource": [
+                "arn:aws:kafka:<REGION>:<AWS-UUID>:group/<CLUSTER-NAME>/<CLUSTER-UUID>/__amazon_msk_connect_*",
+                "arn:aws:kafka:<REGION>:<AWS-UUID>:group/<CLUSTER-NAME>/<CLUSTER-UUID>/connect-*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor5",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListStorageLensConfigurations",
+                "s3:ListAccessPointsForObjectLambda",
+                "s3:GetAccessPoint",
+                "s3:PutAccountPublicAccessBlock",
+                "s3:GetAccountPublicAccessBlock",
+                "s3:ListAllMyBuckets",
+                "s3:ListAccessPoints",
+                "s3:PutAccessPointPublicAccessBlock",
+                "s3:ListJobs",
+                "s3:PutStorageLensConfiguration",
+                "s3:ListMultiRegionAccessPoints",
+                "s3:CreateJob"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+The role should have the following trust relationship:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "kafkaconnect.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+```
+
+The next step is to create a VPC endpoint to S3. From the VPC dashboard in AWS, select 'Endpoints' from the left-hand menu then click on 'Create endpoint'. Give the endpoint a descriptive name, then select 'AWS services'. Search for 'S3' in the 'Services' search field, then select:
+
+<img src="images/vpc-endpoint.png" alt="Connecting the Apache cluster to AWS S3 bucket" width="400px">
+
+Choose the default VPC for the region, click the check box next to the default route tables, then click on 'Create endpoint'.
+
+We're now ready to create the connector. The first step is to create a new plugin for the connector.
+
+1. To create the plugin, a .zip file with the plugin files is required. For the Kafka S3 Sink Connector, this can be downloaded from ["https://www.confluent.io/hub/confluentinc/kafka-connect-s3"](https://www.confluent.io/hub/confluentinc/kafka-connect-s3). Once downloaded, it should be uploaded to the S3 bucket, either via the console or via a web browser.
+2. In the AWS MSK dashboard, select 'Custom plugins' from the left-hand menu, then click on 'Create custom plugin'.
+3. In the next window, navigate to the S3 bucket where the .zip is stored, and select the .zip file:
+
+<img src="images/custom-plugin.png" alt="Connecting the Apache cluster to AWS S3 bucket" width="400px">
+
+4. Click on 'Create custom plugin'. The process will take a few minutes.
+
+Now create the connector. Navigate to 'Connectors' in the left-hand menu of the MSK dashboard.
+1. Click on 'Create connector'.
+2. Select 'Use existing plugin' and select the plugin just created. Click 'Next'.
+3. Give the connector a name, make sure 'MSK cluster' is highlighted, then select the cluster created earlier.
+4. Use the following settings for the configuration:
+
+```
+connector.class=io.confluent.connect.s3.S3SinkConnector
+# same region as our bucket and cluster
+s3.region=<REGION>
+flush.size=1
+schema.compatibility=NONE
+tasks.max=3
+# this depends on names given to topics
+topics.regex=<TOPIC-NAME>.*
+format.class=io.confluent.connect.s3.format.json.JsonFormat
+partitioner.class=io.confluent.connect.storage.partitioner.DefaultPartitioner
+value.converter.schemas.enable=false
+value.converter=org.apache.kafka.connect.json.JsonConverter
+storage.class=io.confluent.connect.s3.storage.S3Storage
+key.converter=org.apache.kafka.connect.storage.StringConverter
+s3.bucket.name=<BUCKET_NAME>
+```
+
+5. Choose defaults for remaining settings until 'Access Permissions', where the IAM role created for the connector should be selected.
+6. Click 'Next', then 'Next' again. Select a location for log delivery. I selected to have logs delivered to the S3 bucket.
+7. Click 'Next' and then 'Create connector'.
+
+Once the connector creation process is complete, you should be able to see any messages sent to the cluster in the S3 bucket, inside a folder named 'Topics'.
+
+## Batch processing data using Apache Spark on Databricks
+
+In order to batch process the data on Databricks, it's necessary to mount the S3 bucket on the platform. The file [mounting_the_s3_bucket_on_the_databricks.ipynb](databricks_notebooks/mounting_the_s3_bucket_on_the_databricks.ipynb) is a notebook that was run on the Databricks platform. The steps carried out in the notebook are:
+
+1. Import necessary libraries
+2. List tables in Databricks filestore in order to obtain AWS credentials file name
+3. Read the credentials .csv into a Spark dataframe
+4. Generate credential variables from Spark dataframe
+5. Mount the S3 bucket containing the messages from the Kafka topics
+6. List the topics
+7. Read the .json message files into three Spark dataframes, one each for each of the topics
+
+### Clean and query the data using Apache Spark on Databricks
+
+The file [clean_and_queries_batch_data.ipynb](databricks_notebooks/clean_and_queries_batch_data.ipynb) contains the code for performing the necessary cleaning and querying of the dataframes created using the steps above. 
+
+### Orchestrating automated workflow of notebook on Databricks
+
+MWAA was used to automate the process of running the batch processing on Databricks. The file 0ecac53030fd_dag.py is the Python code for a directed acyclic graph (DAG) that orchestrates the running of the batch processing notebook described above. The file was uploaded to the MWAA environment, where Airflow is utilised to connect to and run the Databricks notebook at scheduled intervals, in this case @daily.
 
