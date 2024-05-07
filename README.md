@@ -386,19 +386,19 @@ Navigate to the AWS API Gateway service. This project uses a REST API.
 
 3. From the 'Actions' menu, choose 'Create resource'. Select 'Configure as proxy resource' and 'Enable API Gateway CORS' boxes, then click on 'Create resource':
 
-![AWS API Gateway](images/rest-api-create-resource.png)
+<img src="images/rest-api-create-resource.png" alt="AWS API Gateway" width="600px">
 
 4. On the next page, set up HTTP Proxy, using the address for earlier as the endpoint, "http://your-client-public-dns:8082/{proxy}":
 
-![AWS API Gateway](images/rest-api-create-method.png)
+<img src="images/rest-api-create-method.png" alt="AWS API Gateway" width="600px">
 
 5. With the resource and method created, it's possible to test the API (make sure that the REST proxy on the client is running and listening for requests). If everything is working correctly, the following test should result in a 200 response code and the same response body obtained through the browser:
 
-![AWS API Gateway](images/rest-api-test-method.png)
+<img src="images/rest-api-test-method.png" alt="AWS API Gateway" width="600px">
 
 6. Now the API needs to be deployed. From the 'Actions' menu, select 'Deploy API'. Choose 'New stage' and give the stage a name, then click on 'Deploy':
 
-![AWS API Gateway](images/rest-api-deploy.png)
+<img src="images/rest-api-deploy.png" alt="AWS API Gateway" width="400px">
 
 This completes the process and an invoke URL is generated that can then be used for POST requests.
 
