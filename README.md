@@ -386,9 +386,27 @@ Navigate to the AWS API Gateway service. This project uses a REST API.
 
 3. From the 'Actions' menu, choose 'Create resource'. Select 'Configure as proxy resource' and 'Enable API Gateway CORS' boxes, then click on 'Create resource':
 
+![AWS API Gateway](images/rest-api-create-resource.png)
+
+4. On the next page, set up HTTP Proxy, using the address for earlier as the endpoint, "http://your-client-public-dns:8082/{proxy}":
+
+![AWS API Gateway](images/rest-api-create-method.png)
+
+5. With the resource and method created, it's possible to test the API (make sure that the REST proxy on the client is running and listening for requests). If everything is working correctly, the following test should result in a 200 response code and the same response body obtained through the browser:
+
+![AWS API Gateway](images/rest-api-test-method.png)
+
+6. Now the API needs to be deployed. From the 'Actions' menu, select 'Deploy API'. Choose 'New stage' and give the stage a name, then click on 'Deploy':
+
+![AWS API Gateway](images/rest-api-deploy.png)
+
+This completes the process and an invoke URL is generated that can then be used for POST requests.
 
 ### Sending messages to the cluster using the API gateway
 
+Running the script [user_posting_emulation_batch_kafka.py](user_posting_scripts/user_posting_emulation_batch_kafka.py) will emulate a stream of messages and post those messages to the cluster via the API gateway and the Kafka REST proxy.
+
+In order to access the messages in each topic in the cluster, I have used Kafka Connect, using AWS MSK Connect, to connect the cluster to an AWS S3 bucket into which messages can be deposited.
 
 
 ### Connecting the Apache cluster to AWS S3 bucket
