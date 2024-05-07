@@ -517,7 +517,7 @@ The role should have the following trust relationship:
 
 The next step is to create a VPC endpoint to S3. From the VPC dashboard in AWS, select 'Endpoints' from the left-hand menu then click on 'Create endpoint'. Give the endpoint a descriptive name, then select 'AWS services'. Search for 'S3' in the 'Services' search field, then select:
 
-<img src="images/vpc-endpoint.png" alt="Connecting the Apache cluster to AWS S3 bucket" width="400px">
+<img src="images/vpc-endpoint.png" alt="Connecting the Apache cluster to AWS S3 bucket" width="700px">
 
 Choose the default VPC for the region, click the check box next to the default route tables, then click on 'Create endpoint'.
 
