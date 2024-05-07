@@ -687,7 +687,7 @@ Running the script [user_posting_emulation_streaming.py](user_posting_scripts/us
 
 ### Processing the streaming data in Databricks
 
-The Jupyter notebook [read_and_transform_Kinesis_streams.ipynb](read_and_transform_Kinesis_streams.ipynb) contains all the code necessary for retrieving the streams from Kinesis, transforming (cleaning) the data, and then loading the data into Delta tables on the Databricks cluster. The steps taken in the code are:
+The Jupyter notebook [read_and_transform_Kinesis_streams.ipynb](databricks_notebooks/read_and_transform_Kinesis_streams.ipynb) contains all the code necessary for retrieving the streams from Kinesis, transforming (cleaning) the data, and then loading the data into Delta tables on the Databricks cluster. The steps taken in the code are:
 
   1. Import necessary functions and types
   2. List tables in Databricks filestore in order to obtain AWS credentials file name
@@ -708,7 +708,7 @@ The Jupyter notebook [read_and_transform_Kinesis_streams.ipynb](read_and_transfo
 
   - Navigate to Databricks off the main menu on the left.
   - Click on "Catalog."
- <img src="images/checking-data-delta-table-1.png" alt="To access and verify the data in Databricks" width="600px">
+ <img src="images/checking-data-delta-table-1.png" alt="To access and verify the data in Databricks" width="800px">
  
   - Locate your streaming name among the available tables:
     - 0ecac53030rd_pin_table
@@ -717,7 +717,7 @@ The Jupyter notebook [read_and_transform_Kinesis_streams.ipynb](read_and_transfo
   - Click on each table, and inside the table, click on "Sample Data."
   - Verify if the data displayed is cleaned data, meaning it has been processed and is ready for analysis.
 
-<img src="images/checking-data-delta-table-2.png" alt="To access and verify the data in Databricks" width="600px">
+<img src="images/checking-data-delta-table-2.png" alt="To access and verify the data in Databricks" width="900px">
 
 ## Next Steps:
 
