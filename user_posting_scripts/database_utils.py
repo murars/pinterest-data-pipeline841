@@ -16,7 +16,8 @@ load_dotenv()
 random.seed(100)
 
 class AWSDBConnector:
-    '''This class contains methods for establishing a connection to a database 
+    '''
+    This class contains methods for establishing a connection to a database 
     using SQLAlchemy and acquiring records from the connected database
     '''
     def __init__(self):
@@ -30,7 +31,8 @@ class AWSDBConnector:
         self.user_result = {}
     
     def create_db_connector(self):
-        '''Uses sqlalchemy.create_engine() method to generate connection engine
+        '''
+        Uses sqlalchemy.create_engine() method to generate connection engine
         using credentials contained in class attributes. Returns engine object.
         '''
         engine = sqlalchemy.create_engine(
@@ -69,7 +71,8 @@ class AWSDBConnector:
 
 
 def post_record_to_API(method: str, invoke_url: str, record_dict: dict, *args):
-    '''Creates payload of correct format for posting to API, and uses
+    '''
+    Creates payload of correct format for posting to API, and uses
     requests library to send payload to invoke_url via PUT or POST request
 
     Parameters
