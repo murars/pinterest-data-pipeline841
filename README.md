@@ -608,7 +608,7 @@ The settings used for the DELETE method were:
  - 'Action': 'DeleteStream'
  - 'Execution role': 'arn of IAM role created'
 
-<img src="images/delete-method-settings-1" alt="Create API proxy for uploading data to streams" width="600px">
+<img src="images/delete-method-settings-1.png" alt="Create API proxy for uploading data to streams" width="600px">
 
 In 'Integration Request' under 'HTTP Headers', add a new header:
 
@@ -624,7 +624,7 @@ Use the following code in the template:
     "StreamName": "$input.params('stream-name')"
 }
 ```
-<img src="images/delete-method-settings-2" alt="Create API proxy for uploading data to streams" width="600px">
+<img src="images/delete-method-settings-2.png" alt="Create API proxy for uploading data to streams" width="600px">
 
 For the other methods, the same settings were used except for:
 
